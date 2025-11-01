@@ -1,0 +1,17 @@
+# Ignore compiled Python files and temporary logs
+*.pyc
+__pycache__/
+*.log
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore Kafka/Flink log/storage directories
+kafka-logs/
+tmp/
+
+# Ignore local environment files
+.idea/
+.vscode/
+venv/
