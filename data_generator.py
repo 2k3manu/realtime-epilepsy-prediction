@@ -5,8 +5,8 @@ import numpy as np
 from kafka import KafkaProducer
 from datetime import datetime
 
-# --- CONFIGURATION (FINALIZED) ---
-# Using 127.0.0.1 instead of localhost for more reliable Windows connection
+# --- CONFIGURATION ---
+# Using 127.0.0.1 for reliable connection from WSL to Windows Kafka broker
 KAFKA_SERVER = '127.0.0.1:9092' 
 KAFKA_TOPIC = 'epilepsy_telemetry'
 
@@ -20,7 +20,6 @@ def generate_telemetry_stream():
     Simulates a live, continuous telemetry stream by reading and looping 
     through the comprehensive dataset. This acts as the Kafka Producer.
     """
-    # Initialize producer to None to prevent UnboundLocalError if connection fails
     producer = None 
     try:
         # 1. Load the comprehensive dataset
@@ -33,11 +32,13 @@ def generate_telemetry_stream():
         
         # 2. Initialize Kafka Producer
         producer = KafkaProducer(
-            # Pass bootstrap_servers as a LIST
             bootstrap_servers=[KAFKA_SERVER],
             value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-            # Increase connection timeout for stability during Kafka startup
-            api_version=(0, 10), 
+            
+            # CRITICAL FIX: Force the client to use a modern API version range.
+            # (0, 11, 5) corresponds to Kafka 0.11.0.0, which is the baseline 
+            # for modern protocols and allows negotiation up to 4.1.0.
+            api_version=(0, 11, 5), 
             request_timeout_ms=30000 
         )
         print(f"Kafka Producer connected. Target Topic: {KAFKA_TOPIC}")

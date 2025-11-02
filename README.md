@@ -10,20 +10,18 @@ The system is designed to be **device-agnostic** and easily deployable, with the
 
 ## Architecture and Technical Stack
 
-| Component | Technology | Role in Project | Version Used |
-| :--- | :--- | :--- | :--- |
-| **Ingestion** | **Apache Kafka** | High-throughput backbone. Handles continuous data streaming and ensures message delivery using the **Partition Key** for user separation. | Kafka 4.1.0 (KRaft Mode) |
-| **Processing (Future)** | **Apache Flink** | The dedicated stream processor. Will handle stateful processing, time windowing, and apply the personalized ML model. | (To be installed) |
-| **Storage (Future)** | **Apache Cassandra** | Low-latency NoSQL store for serving real-time predictions and alerts to the React front-end. | (To be installed) |
-| **Front-end/Demo** | **React.js / Python Flask** | (Future) Used to display live charts, risk scores, and the alert history log. | React.js / Flask (API) |
-| **ML Training** | **Apache Spark** | (Future) Used for batch training and retraining of the specialized ML models. | PySpark |
+| Component | Technology | Role in Project | Status | Version Used |
+| :--- | :--- | :--- | :--- | :--- |
+| **Ingestion** | **Apache Kafka** | High-throughput backbone, keyed by individual ID for stream integrity. | **Deployed** | Kafka 4.1.0 (KRaft Mode) |
+| **Processing** | **Apache Flink** | **Core Prediction Engine.** Performs stream parsing, keying, and execution of the multi-factor risk logic. | **Deployed** | Flink 2.1.0 |
+| **Connector** | **KafkaSource API** | The modern, reliable method used to connect Flink to Kafka topics. | **Deployed** | Connector 4.0.1 |
+| **Storage (Future)** | **Apache Cassandra** | Low-latency NoSQL store for serving alerts to the React front-end. | (To be installed) |
+| **Front-end/Demo** | **React.js / Python Flask** | (Future) Used to display live charts, risk scores, and the alert history log. | (To be built) |
 
 ---
 
-## Data Source and Simulation
-
-The project uses a Python Producer (`data_generator.py`) to simulate a continuous sensor feed.
+## Data Source and Streaming Configuration
 
 * **Data File:** `patient_seizure_dataset.csv` (11,700 rows of multimodal data)
-* **Streaming Logic:** The producer reads the CSV file and loops indefinitely, sending each row as a **JSON** message.
-* **Partitioning:** The unique stream ID (`patient_A`) is used as the **Kafka Partition Key** to guarantee data ordering and integrity for Flink's personalized processing.
+* **Streaming Logic:** The `data_generator.py` streams data using the **correct API version** for Kafka 4.1.0 and utilizes the `UNIQUE_STREAM_ID` as the Partition Key.
+* **Key Achievement:** Successfully resolved all complex WSL/Java classpath and resource allocation issues to achieve **full end-to-end streaming output** in the Flink Task Manager logs.
