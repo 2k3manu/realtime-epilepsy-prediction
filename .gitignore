@@ -1,17 +1,15 @@
-# Ignore compiled Python files and temporary logs
-*.pyc
+# Node / React
+frontend/node_modules/
+frontend/build/
+
+# Python cache
 __pycache__/
+*.pyc
+
+# Environment and logs
+.env
 *.log
 
-# Ignore OS files
+# OS files
 .DS_Store
 Thumbs.db
-
-# Ignore Kafka/Flink log/storage directories
-kafka-logs/
-tmp/
-
-# Ignore local environment files
-.idea/
-.vscode/
-venv/
