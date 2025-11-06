@@ -1,160 +1,104 @@
-import { useState, useEffect } from "react";
-import Navbar from "./components/Navbar";
-import VitalsCard from "./components/VitalsCard";
-import AlertCard from "./components/AlertCard";
-import VitalsChart from "./components/VitalsChart";
+import React, { useEffect, useState } from "react";
+import "./App.css";
 
 function App() {
-  // --- Vital States ---
-  const [heartRate, setHeartRate] = useState(82);
-  const [temperature, setTemperature] = useState(36.7);
-  const [movement, setMovement] = useState(1.2);
+  const [vitals, setVitals] = useState(null);
+  const [error, setError] = useState(null);
 
-  // --- Alert States ---
-  const [alert, setAlert] = useState({
-    message: "✅ All vitals stable",
-    level: "normal",
-  });
-  const [alertHistory, setAlertHistory] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  // Function to fetch data from Flask API
+  const fetchVitals = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/vitals");
+      if (!response.ok) throw new Error("Network response was not ok");
+      const data = await response.json();
+      setVitals(data);
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching vitals:", error);
+      setError("Unable to fetch data. Flask API might be offline.");
+    }
+  };
 
-  // --- Generate Live Simulated Data ---
+  // Refresh every 3 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Heart Rate: baseline with small variation
-      setHeartRate((prev) => {
-        let change = (Math.random() - 0.5) * 10;
-        return Math.max(55, Math.min(150, prev + change));
-      });
-
-      // Temperature: slow and mild fluctuation
-      setTemperature((prev) => {
-        let change = (Math.random() - 0.5) * 0.3;
-        return Math.max(35.2, Math.min(38.0, prev + change));
-      });
-
-      // Movement: realistic — fluctuates near baseline, occasional spikes
-      setMovement((prev) => {
-        if (Math.random() < 0.1) return Math.random() * 3.5 + 0.5; // simulate jerks
-        let baseline = 1.5 + (Math.random() - 0.5) * 0.8;
-        return Math.max(0, Math.min(4, baseline));
-      });
-    }, 2000);
-
+    fetchVitals();
+    const interval = setInterval(fetchVitals, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- Update Sliding Chart ---
-  useEffect(() => {
-    const newPoint = {
-      time: new Date().toLocaleTimeString().split(" ")[0],
-      heartRate,
-      temperature,
-      movement,
-    };
-    setChartData((prev) => {
-      const updated = [...prev, newPoint];
-      return updated.length > 60 ? updated.slice(updated.length - 60) : updated;
-    });
-  }, [heartRate, temperature, movement]);
+  // Dynamic color based on risk level
+  const getRiskColor = (level) => {
+    if (level === "High") return "high-risk";
+    if (level === "Moderate") return "moderate-risk";
+    return "normal-risk";
+  };
 
-  // --- Intelligent Alert System ---
-  useEffect(() => {
-    let newLevel = "normal";
-    let msg = "✅ All vitals stable";
-
-    if (heartRate > 110 || temperature > 37.6 || movement > 3.0) {
-      newLevel = "high";
-      msg = `🚨 High Risk Detected | HR: ${heartRate.toFixed(
-        0
-      )} bpm, Temp: ${temperature.toFixed(1)}°C, Move: ${movement.toFixed(2)}g`;
-    } else if (heartRate > 90 || temperature > 37.2 || movement > 1.8) {
-      newLevel = "medium";
-      msg = `⚠️ Moderate Risk | HR: ${heartRate.toFixed(
-        0
-      )} bpm, Temp: ${temperature.toFixed(1)}°C, Move: ${movement.toFixed(2)}g`;
-    }
-
-    // Only record new alert when level changes
-    setAlert((prev) => {
-      if (prev.level !== newLevel) {
-        setAlertHistory((prevHistory) => [
-          { message: msg, time: new Date().toLocaleTimeString() },
-          ...prevHistory,
-        ]);
-      }
-      return { message: msg, level: newLevel };
-    });
-  }, [heartRate, temperature, movement]);
-
-  // --- JSX UI ---
   return (
-    <div>
-      <Navbar />
+    <div className="dashboard">
+      <h1>🧠 Real-time Epileptic Seizure Monitoring</h1>
 
-      {/* Title */}
-      <div style={{ textAlign: "center", marginTop: "30px" }}>
-        <h2>🧠 Personalized Real-time Epileptic Seizure Monitor</h2>
-        <p style={{ color: "#666" }}>
-          Simulating live patient vitals and seizure risk detection
-        </p>
-      </div>
+      {error && <p className="error">{error}</p>}
 
-      {/* Vital Cards */}
-      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
-        <VitalsCard
-          title="Heart Rate"
-          value={heartRate.toFixed(0)}
-          unit="bpm"
-          color="#E63946"
-        />
-        <VitalsCard
-          title="Body Temp"
-          value={temperature.toFixed(1)}
-          unit="°C"
-          color="#457B9D"
-        />
-        <VitalsCard
-          title="Movement"
-          value={movement.toFixed(2)}
-          unit="g"
-          color="#2A9D8F"
-        />
-      </div>
+      {!vitals ? (
+        <p className="loading">Loading live data...</p>
+      ) : (
+        <>
+          <div className={`risk-banner ${getRiskColor(vitals.risk_level)}`}>
+            <h2>Current Risk Level: {vitals.risk_level}</h2>
+          </div>
 
-      {/* Alert Display */}
-      <div style={{ marginTop: "30px" }}>
-        <AlertCard message={alert.message} level={alert.level} />
-      </div>
+          <div className="vitals-grid">
+            <div className="vital-card">
+              <h3>❤️ Heart Rate</h3>
+              <p>{vitals.heart_rate_bpm} bpm</p>
+            </div>
+            <div className="vital-card">
+              <h3>🩸 SpO₂</h3>
+              <p>{vitals.spo2_percent}%</p>
+            </div>
+            <div className="vital-card">
+              <h3>🌡️ Temperature</h3>
+              <p>{vitals.body_temperature_c.toFixed(1)} °C</p>
+            </div>
+            <div className="vital-card">
+              <h3>🏃 Movement</h3>
+              <p>{vitals.movement_g.toFixed(2)} g</p>
+            </div>
+            <div className="vital-card">
+              <h3>😰 Stress Level</h3>
+              <p>{vitals.stress_level}</p>
+            </div>
+            <div className="vital-card">
+              <h3>🍬 Glucose</h3>
+              <p>{vitals.blood_glucose_mgdl} mg/dL</p>
+            </div>
+            <div className="vital-card">
+              <h3>💊 Medication Taken</h3>
+              <p>{vitals.medication_taken ? "Yes" : "No"}</p>
+            </div>
+            <div className="vital-card">
+              <h3>💤 Sleep Hours</h3>
+              <p>{vitals.sleep_hours} hrs</p>
+            </div>
+            <div className="vital-card">
+              <h3>🔊 Noise Exposure</h3>
+              <p>{vitals.noise_exposure_db} dB</p>
+            </div>
+            <div className="vital-card">
+              <h3>💡 Ambient Light</h3>
+              <p>{vitals.ambient_light_lux} lux</p>
+            </div>
+            <div className="vital-card">
+              <h3>⚡ Seizure Label</h3>
+              <p>{vitals.seizure_label === 1 ? "Detected" : "None"}</p>
+            </div>
+          </div>
 
-      {/* Live Chart */}
-      <VitalsChart data={chartData} />
-
-      {/* Alert History */}
-      <div
-        style={{
-          width: "60%",
-          margin: "30px auto",
-          textAlign: "left",
-          background: "#f5f5f5",
-          padding: "15px",
-          borderRadius: "10px",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h3>🕒 Alert History</h3>
-        {alertHistory.length === 0 ? (
-          <p>No alerts generated yet.</p>
-        ) : (
-          <ul>
-            {alertHistory.map((entry, index) => (
-              <li key={index}>
-                <strong>{entry.time}</strong>: {entry.message}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+          <p className="timestamp">
+            🕒 Last Updated: {new Date(vitals.timestamp).toLocaleString()}
+          </p>
+        </>
+      )}
     </div>
   );
 }
