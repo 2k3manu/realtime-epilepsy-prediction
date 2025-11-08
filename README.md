@@ -1,75 +1,60 @@
 # 🧠 Personalized Real-time Epileptic Seizure Monitoring System  
 
 ## 📘 Overview
+This MCA Capstone Project implements a **real-time, scalable health analytics pipeline** for predicting and monitoring epileptic seizures.  
+It continuously streams multimodal biosignals — **Heart Rate, SpO₂, Temperature, Movement, Stress, Glucose, Medication Intake, and Environmental Factors** — to predict potential seizure risk in real time.
 
-This project is a **complete end-to-end real-time monitoring pipeline** built as part of the MCA Capstone Project (PES University).  
-It predicts and visualizes seizure risks by analyzing **multimodal physiological signals** such as Heart Rate, Body Temperature, and Movement.  
-
-The system is:
-- **Device-agnostic** – can integrate with any medical wearable or IoT sensor  
-- **Real-time** – powered by Kafka, Flink, and Cassandra backend pipeline  
-- **Interactive** – now includes a live **React dashboard frontend**
+The system is **device-agnostic**, meaning it can ingest telemetry from *any wearable or medical IoT device* via Kafka.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture & Technology Stack
 
 | Layer | Technology | Description | Status |
-|-------|-------------|-------------|---------|
-| **Ingestion Layer** | 🧩 Apache Kafka 4.1.0 | Streams real-time vitals data keyed by patient ID | ✅ Completed |
-| **Processing Layer** | ⚙️ Apache Flink 2.1.0 | Performs multimodal risk analysis with stateful stream processing | ✅ Completed |
-| **Serving Layer** | 🗄️ Apache Cassandra 4.1.10 | Low-latency NoSQL store for telemetry and alert history | ✅ Completed |
-| **Frontend Layer** | 🌐 React.js (Create React App) | Displays real-time vitals, risk alerts, and alert history graphically | ✅ Completed |
-| **API Layer** | 🧠 Flask (Upcoming) | REST API bridge between Cassandra and Frontend for live data | 🔜 In Progress |
+| :---- | :---------- | :----------- | :------ |
+| **Data Ingestion** | 🧩 Apache Kafka 4.1.0 (KRaft Mode) | High-throughput data streaming backbone. | ✅ Completed |
+| **Stream Processing** | ⚙️ Apache Flink 2.1.0 | Performs stateful multimodal risk calculation. | ✅ Completed |
+| **Storage/Serving Layer** | 🗄️ Apache Cassandra 4.1.10 | Stores telemetry and alert data for real-time visualization. | ✅ Completed |
+| **Backend API** | 🧠 Node.js + Express | Exposes REST API for React to fetch live vitals from Cassandra. | ✅ Completed |
+| **Frontend Dashboard** | 🌐 React.js | Displays real-time graphs, risk alerts, and vitals. | 🚧 In Progress |
 
 ---
 
-## ⚙️ Frontend Functionality (React Dashboard)
+## ⚙️ Data & Backend Configuration
 
-**Live Simulation Features:**
-- Real-time updates every 2 seconds for Heart Rate, Temperature, and Movement  
-- Intelligent **risk classification** (Normal / Moderate / High)  
-- **Auto recovery detection** when vitals stabilize  
-- 60-point **sliding window chart** showing continuous fluctuations  
-- **Alert history log** storing transitions between risk levels  
+- **Dataset:** `patient_seizure_dataset.csv` (~11,700 rows, multimodal telemetry).
+- **Cassandra Table:** `vitals_data`  
+  Includes attributes like:
+  - `heart_rate_bpm`, `spo2_percent`, `body_temperature_c`, `movement_g`, `stress_level`,  
+    `blood_glucose_mgdl`, `medication_taken`, `sleep_hours`, `noise_exposure_db`,  
+    `ambient_light_lux`, `seizure_label`, and computed `risk_level`.
+- **Backend Server:**  
+  - File: `backend/flask_app.js`  
+  - Port: `5000`  
+  - Endpoint: `/api/vitals`
 
-**Key React Components:**
-- `VitalsCard.js` – Shows live readings  
-- `AlertCard.js` – Displays current status with color codes  
-- `VitalsChart.js` – Line graph visualization  
-- `Navbar.js` – Simple app navigation bar  
-- `App.js` – Main logic combining live simulation and state tracking  
-
----
-
-## 🧠 Simulation Logic (Frontend)
-
-| Vital | Range | Behavior |
-|--------|--------|-----------|
-| **Heart Rate (bpm)** | 55 – 150 | Random baseline drift with natural variability |
-| **Temperature (°C)** | 35.2 – 38.0 | Mild slow fluctuations |
-| **Movement (g)** | 0 – 4 | Small random motion with occasional sudden spikes (seizure simulation) |
+✅ Successfully connected **Node.js → Cassandra → React** for real-time analytics.
 
 ---
 
 ## 🧩 Phase-wise Progress Tracker
 
 | Phase | Component | Deliverables | Status |
-|-------|------------|---------------|---------|
-| **Phase 1** | Kafka Ingestion | Python producer & streaming to topic | ✅ Completed |
-| **Phase 2** | Flink Processing | Multimodal real-time risk detection | ✅ Completed |
-| **Phase 3** | Cassandra Serving | Data persistence for telemetry & alerts | ✅ Completed |
-| **Phase 4** | React Frontend | Real-time visualization dashboard | ✅ Completed |
-| **Phase 5** | Flask API + Deployment | REST integration, hosting on cloud | 🔜 Next Phase |
+| :---- | :---------- | :------------ | :------ |
+| **Phase 1** | Kafka Ingestion | Topic setup, Python Producer, stream verification | ✅ Completed |
+| **Phase 2** | Flink Processing | Stateful prediction logic, feature extraction | ✅ Completed |
+| **Phase 3** | Cassandra Storage | Schema design, risk-level aggregation | ✅ Completed |
+| **Phase 4** | Node.js API | Express server for Cassandra data fetch | ✅ Completed |
+| **Phase 5** | React Frontend | Live visualization dashboard | 🚧 Ongoing |
 
 ---
 
-## 🌍 Real-world Application
+## 🌍 Applications
 
-- Predictive healthcare systems  
-- Wearable IoT medical devices  
-- ICU and remote patient monitoring  
-- Early seizure alerting systems  
+- Remote patient monitoring systems  
+- Smart healthcare IoT devices  
+- Predictive seizure detection for epilepsy patients  
+- Hospital telemetry and data-driven alerts  
 
 ---
 
@@ -82,7 +67,5 @@ The system is:
 ---
 
 ## 🧾 License
-This project is part of **PES University MCA Capstone (UQ24CA741A)**.  
+This project is part of the **PES University MCA Capstone (UQ24CA741A)** program.  
 For academic and non-commercial research purposes only.
-
----

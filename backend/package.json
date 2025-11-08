@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Node.js Express backend for Real-time Epileptic Seizure Monitoring System (Cassandra Integrated)",
+  "main": "flask_app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node flask_app.js",
+    "dev": "nodemon flask_app.js"
+  },
+  "author": "Manu N M",
+  "license": "ISC",
+  "dependencies": {
+    "cassandra-driver": "^4.8.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
