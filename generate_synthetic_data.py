@@ -4,85 +4,80 @@ from datetime import datetime, timedelta
 
 def generate_seizure_dataset():
     """
-    Generates a synthetic, comprehensive dataset for real-time epileptic seizure prediction.
-    It includes 10 physiological/behavioral features and a seizure label (11,700 rows).
+    Generates a realistic synthetic dataset (12,000 rows) for real-time
+    epileptic seizure prediction using multimodal biosignals.
+    Compatible with Flink, Kafka, Cassandra, and AIML pipeline.
     """
+
     N_ROWS = 12000
-    SEIZURE_PROB = 0.025  # 2.5% of data labeled as seizure
-    SEIZURE_PERIOD = 20 # Seizure event lasts 20 rows (10 minutes)
-    N_SEIZURES_TOTAL = int(N_ROWS * SEIZURE_PROB)
-    N_NON_SEIZURES = N_ROWS - N_SEIZURES_TOTAL
-    N_PATIENTS = 5 
+    N_PATIENTS = 5
+    SEIZURE_PROB = 0.025  # 2.5% seizure data
+    SEIZURE_DURATION = 20  # rows per seizure event (~10 mins)
 
-    start_time = datetime.now() - timedelta(days=25)
-    time_stamps = [start_time + timedelta(minutes=0.5 * i) for i in range(N_ROWS)]
-    patient_ids = [f'patient_{i+1}' for i in np.random.choice(N_PATIENTS, size=N_ROWS)]
+    # --- Timestamp Series ---
+    start_time = datetime.now() - timedelta(days=30)
+    timestamps = [start_time + timedelta(minutes=i * 0.5) for i in range(N_ROWS)]
+    patient_ids = [f"patient_{np.random.randint(1, N_PATIENTS + 1)}" for _ in range(N_ROWS)]
 
-    # --- Generate Non-Seizure Data (Normal Distribution) ---
-    df_non_seizure = pd.DataFrame({
-        'time': time_stamps[:N_NON_SEIZURES],
-        'patient_id': patient_ids[:N_NON_SEIZURES],
-        'seizure_label': 0
+    # --- Initialize Normal State ---
+    df = pd.DataFrame({
+        "time": timestamps,
+        "patient_id": patient_ids,
+        "heart_rate_bpm": np.random.normal(75, 10, N_ROWS).clip(55, 120).astype(int),
+        "spo2_percent": np.random.normal(97.8, 1.0, N_ROWS).clip(90, 100).round(1),
+        "body_temperature_c": np.random.normal(36.8, 0.4, N_ROWS).clip(36.0, 38.5).round(2),
+        "movement_g": np.random.normal(0.9, 0.4, N_ROWS).clip(0.1, 3.5).round(2),
+        "stress_level": np.random.normal(40, 20, N_ROWS).clip(0, 100).astype(int),
+        "blood_glucose_mgdl": np.random.normal(95, 20, N_ROWS).clip(60, 180).astype(int),
+        "sleep_hours": np.random.normal(7, 1.5, N_ROWS).clip(4, 10).round(1),
+        "noise_exposure_db": np.random.normal(40, 8, N_ROWS).clip(20, 80).round(2),
+        "ambient_light_lux": np.random.normal(250, 150, N_ROWS).clip(10, 800).astype(int),
+        "seizure_label": 0,
+        "risk_level": "Normal"
     })
 
-    # Normal Ranges:
-    df_non_seizure['heart_rate_bpm'] = np.random.normal(loc=75, scale=8, size=N_NON_SEIZURES).clip(60, 100).astype(int)
-    df_non_seizure['movement_g'] = np.random.normal(loc=0.8, scale=0.3, size=N_NON_SEIZURES).clip(0.1, 1.5).round(2)
-    df_non_seizure['temperature_c'] = np.random.normal(loc=36.8, scale=0.3, size=N_NON_SEIZURES).clip(36.0, 37.5).round(2)
-    df_non_seizure['spo2_percent'] = np.random.normal(loc=98.5, scale=1.0, size=N_NON_SEIZURES).clip(95, 100).round(1)
-    df_non_seizure['eda_microsiemens'] = np.random.normal(loc=2.5, scale=1.0, size=N_NON_SEIZURES).clip(0.5, 5.0).round(2)
-    df_non_seizure['sleep_hours'] = np.random.normal(loc=7.0, scale=1.5, size=N_NON_SEIZURES).clip(4, 10).round(1)
-    df_non_seizure['stress_level'] = np.random.normal(loc=30, scale=15, size=N_NON_SEIZURES).clip(0, 70).astype(int)
-    df_non_seizure['medication_taken'] = np.random.choice([0, 1], size=N_NON_SEIZURES, p=[0.1, 0.9])
-    df_non_seizure['ambient_light_lux'] = np.random.normal(loc=200, scale=150, size=N_NON_SEIZURES).clip(10, 800).astype(int)
-    df_non_seizure['blood_glucose_mgdl'] = np.random.normal(loc=95, scale=15, size=N_NON_SEIZURES).clip(70, 140).astype(int)
+    # --- Simulate Sleep Consistency (fixed per patient) ---
+    for p in df["patient_id"].unique():
+        mask = df["patient_id"] == p
+        daily_sleep = np.random.normal(7, 1.0)
+        df.loc[mask, "sleep_hours"] = daily_sleep
 
-    # --- Generate Seizure Data (Extreme/Anomalous Values) ---
-    seizure_data = []
-    for _ in range(N_SEIZURES_TOTAL // SEIZURE_PERIOD):
-        patient_id = np.random.choice(patient_ids)
-        event_start_time = df_non_seizure['time'].sample(1).iloc[0]
-        seizure_time_stamps = [event_start_time + timedelta(minutes=0.5 * i) for i in range(SEIZURE_PERIOD)]
+    # --- Add Seizure Events using .iloc ---
+    num_events = int(N_ROWS * SEIZURE_PROB // SEIZURE_DURATION)
+    for _ in range(num_events):
+        start_idx = np.random.randint(0, N_ROWS - SEIZURE_DURATION)
+        end_idx = start_idx + SEIZURE_DURATION
 
-        seizure_block = pd.DataFrame({
-            'time': seizure_time_stamps,
-            'patient_id': [patient_id] * SEIZURE_PERIOD,
-            'seizure_label': [1] * SEIZURE_PERIOD,
-            
-            # Anomalous Ranges (Triggers):
-            'heart_rate_bpm': np.random.normal(loc=135, scale=10, size=SEIZURE_PERIOD).clip(120, 160).astype(int),
-            'movement_g': np.random.normal(loc=4.0, scale=0.5, size=SEIZURE_PERIOD).clip(2.5, 5.0).round(2),
-            'temperature_c': np.random.normal(loc=38.5, scale=0.3, size=SEIZURE_PERIOD).clip(37.8, 39.5).round(2),
-            'spo2_percent': np.random.normal(loc=90, scale=2.0, size=SEIZURE_PERIOD).clip(85, 95).round(1),
-            'eda_microsiemens': np.random.normal(loc=10.0, scale=2.0, size=SEIZURE_PERIOD).clip(6.0, 15.0).round(2),
-            'sleep_hours': np.random.normal(loc=4.0, scale=1.0, size=SEIZURE_PERIOD).clip(2, 6).round(1), 
-            'stress_level': np.random.normal(loc=90, scale=5, size=SEIZURE_PERIOD).clip(80, 100).astype(int), 
-            'medication_taken': np.random.choice([0], size=SEIZURE_PERIOD), 
-            'ambient_light_lux': np.random.normal(loc=500, scale=100, size=SEIZURE_PERIOD).clip(300, 700).astype(int), 
-            'blood_glucose_mgdl': np.random.normal(loc=65, scale=5, size=SEIZURE_PERIOD).clip(50, 75).astype(int)
-        })
-        seizure_data.append(seizure_block)
+        seizure_slice = df.iloc[start_idx:end_idx]
+        seizure_slice["heart_rate_bpm"] = np.random.normal(135, 8, SEIZURE_DURATION).clip(120, 160)
+        seizure_slice["spo2_percent"] = np.random.normal(88, 2, SEIZURE_DURATION).clip(80, 92)
+        seizure_slice["body_temperature_c"] = np.random.normal(38.4, 0.3, SEIZURE_DURATION).clip(37.8, 39.5)
+        seizure_slice["movement_g"] = np.random.normal(3.8, 0.4, SEIZURE_DURATION).clip(2.5, 5.0)
+        seizure_slice["stress_level"] = np.random.normal(90, 5, SEIZURE_DURATION).clip(75, 100)
+        seizure_slice["blood_glucose_mgdl"] = np.random.normal(65, 5, SEIZURE_DURATION).clip(50, 80)
+        seizure_slice["noise_exposure_db"] = np.random.normal(55, 5, SEIZURE_DURATION).clip(45, 75)
+        seizure_slice["ambient_light_lux"] = np.random.normal(400, 80, SEIZURE_DURATION).clip(300, 600)
+        seizure_slice["seizure_label"] = 1
+        seizure_slice["risk_level"] = "High"
 
-    df_seizure = pd.concat(seizure_data, ignore_index=True)
+        df.iloc[start_idx:end_idx] = seizure_slice
 
-    # --- Combine and Finalize ---
-    df = pd.concat([df_non_seizure.iloc[:N_NON_SEIZURES - len(df_seizure)], df_seizure], ignore_index=True)
-    df = df.sample(frac=1).reset_index(drop=True)
+    # --- Add Moderate Risk Data ---
+    mod_mask = (
+        (df["heart_rate_bpm"].between(100, 120)) |
+        (df["stress_level"].between(60, 80)) |
+        (df["movement_g"].between(2.0, 3.0))
+    )
+    df.loc[mod_mask & (df["seizure_label"] == 0), "risk_level"] = "Moderate"
 
-    df = df.head(11700) 
-    column_order = ['time', 'patient_id', 'heart_rate_bpm', 'movement_g', 'temperature_c', 
-                    'spo2_percent', 'eda_microsiemens', 'sleep_hours', 'stress_level', 
-                    'medication_taken', 'ambient_light_lux', 'blood_glucose_mgdl', 'seizure_label']
-    df = df[column_order]
+    # --- Clean and Save ---
+    df = df.sort_values("time").reset_index(drop=True)
+    df.to_csv("patient_seizure_dataset.csv", index=False)
 
-    output_filename = 'patient_seizure_dataset.csv'
-    df.to_csv(output_filename, index=False)
-    return f"Dataset successfully generated and saved as {output_filename} with {len(df)} records."
+    print(f"✅ Dataset successfully generated with {len(df)} records.")
+    print(f"🧠 Seizure Events Simulated: {df['seizure_label'].sum()} rows labeled as seizures.")
+    print("💾 File saved as patient_seizure_dataset.csv")
+
 
 if __name__ == "__main__":
-    result_message = generate_seizure_dataset()
-    print(result_message)
-    print("\n-----------------------------------------------------------------------")
-    print("ACTION REQUIRED: Now run the Python Producer script in a new terminal:")
-    print("python data_generator.py")
-    print("-----------------------------------------------------------------------")
+    generate_seizure_dataset()

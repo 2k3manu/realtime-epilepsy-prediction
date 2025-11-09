@@ -1,18 +1,24 @@
-# Node dependencies
+# Node modules
+node_modules/
 frontend/node_modules/
-frontend/build/
+backend/node_modules/
 
-# Environment files
-.env
-*.log
-
-# Python caches
+# Python virtual environments
+venv/
 __pycache__/
 *.pyc
 
-# IDE files
-.vscode/
-.idea/
+# Environment and credentials
+.env
+*.env
+
+# Build and logs
+build/
+dist/
+*.log
+
+# React build
+frontend/build/
 
 # OS files
 .DS_Store
