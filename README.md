@@ -245,7 +245,7 @@ Displays live vital signs, prediction results, and alert history.
 
 **Manu N M**  
 Master of Computer Applications (MCA)  
-PES University, Dept. of Computer Applications  
+PES University, Deptartment of Computer Applications  
 Capstone Project — 2025  
 
 ---
