@@ -243,7 +243,7 @@ Displays live vital signs, prediction results, and alert history.
 
 ## 👨‍💻 Author
 
-**Manu N M**  
+**Manu N M**
 Master of Computer Applications (MCA)  
 PES University, Deptartment of Computer Applications  
 Capstone Project — 2025  
