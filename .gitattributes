@@ -1,0 +1,68 @@
+# -------------------------------
+# Normalize text file handling
+# -------------------------------
+* text=auto eol=lf
+
+# Ensure Markdown, code, configs show correct diffs
+*.md      text
+*.py      text
+*.js      text
+*.jsx     text
+*.json    text
+*.yml     text
+*.yaml    text
+*.css     text
+*.html    text
+*.sh      text
+
+# -------------------------------
+# Binary files (no diff)
+# -------------------------------
+*.joblib  binary
+*.h5      binary
+*.pkl     binary
+*.model   binary
+*.bin     binary
+*.dat     binary
+*.db      binary
+*.sqlite  binary
+
+# ML model binaries — treat as binary to avoid corruption
+rf_risk_model.joblib        binary
+rf_seizure_model.joblib     binary
+scaler.joblib               binary
+label_encoder.joblib        binary
+
+# Images
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+
+# -------------------------------
+# Log files
+# -------------------------------
+*.log     text
+
+# -------------------------------
+# CSV files — GitHub can diff them
+# -------------------------------
+*.csv     text
+
+# -------------------------------
+# Ignore system-specific files
+# -------------------------------
+*.exe     binary
+*.dll     binary
+
+# -------------------------------
+# Line ending settings
+# -------------------------------
+*.bat     text eol=crlf
+*.ps1     text eol=crlf
+
+# -------------------------------
+# React build files (binary)
+# -------------------------------
+*.map     text
